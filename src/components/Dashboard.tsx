@@ -118,7 +118,10 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
   const todayCount = rdvs.filter(r => r.date === today).length
   const pendingCount = rdvs.filter(r => r.status === 'pending').length
   const confirmedCount = rdvs.filter(r => r.status === 'confirmed').length
-  const ca = rdvs.filter(r => r.status !== 'cancelled').reduce((s, r) => s + r.price, 0)
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const monthRdvs = rdvs.filter(r => r.status !== 'cancelled' && r.date.startsWith(monthPrefix))
+  const ca = monthRdvs.reduce((s, r) => s + r.price, 0)
+  const caCount = monthRdvs.length
 
   function renderCalendar() {
     const firstDay = new Date(calYear, calMonth, 1)
@@ -168,7 +171,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
           { label: "Aujourd'hui", value: todayCount, sub: 'rdv', color: '#0C447C' },
           { label: 'En attente', value: pendingCount, sub: 'à confirmer', color: '#BA7517' },
           { label: 'Confirmés', value: confirmedCount, sub: 'total', color: '#3B6D11' },
-          { label: 'CA prévu', value: ca + ' €', sub: 'total', color: '#C9A84C' },
+          { label: 'CA prévu', value: ca + ' €', sub: `${caCount} rdv ce mois`, color: '#C9A84C' },
         ].map(m => (
           <div key={m.label} className="bg-gray-100 rounded-xl p-4">
             <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">{m.label}</div>
