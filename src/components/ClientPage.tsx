@@ -34,9 +34,30 @@ export default function ClientPage() {
       await supabase.from('slots').update({ taken: true }).eq('id', selSlot)
       setBookedInfo({ date: slot.date, time: slot.time })
       setSuccess(true); setPrenom(''); setTel(''); setSelSlot(null); fetchSlots()
-      setTimeout(() => { setSuccess(false); setBookedInfo(null) }, 8000)
     } else { alert('Erreur lors de la réservation. Réessayez.') }
     setLoading(false)
+  }
+
+  function addToCalendar() {
+    if (!bookedInfo) return
+    const [h, m] = bookedInfo.time.split(':').map(Number)
+    const [y, mo, d] = bookedInfo.date.split('-').map(Number)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const startDate = new Date(y, mo - 1, d, h, m)
+    const endDate = new Date(startDate.getTime() + 40 * 60000)
+    const fmt = (dt: Date) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`
+    const ics = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TCUT//RDV//FR', 'BEGIN:VEVENT',
+      `UID:${Date.now()}@tcut`, `DTSTAMP:${fmt(new Date())}`,
+      `DTSTART:${fmt(startDate)}`, `DTEND:${fmt(endDate)}`,
+      'SUMMARY:Coupe homme - TCUT', 'DESCRIPTION:Rendez-vous chez TCUT, barbier à Epagny',
+      'LOCATION:Epagny, Haute-Savoie', 'END:VEVENT', 'END:VCALENDAR',
+    ].join('\r\n')
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'rdv-tcut.ics'; a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -88,15 +109,29 @@ export default function ClientPage() {
           <button onClick={bookRdv} disabled={loading} className="w-full py-3 bg-[#0C447C] text-white rounded-lg text-sm font-medium hover:bg-[#185FA5] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {loading ? 'Envoi...' : 'Confirmer ma réservation'}
           </button>
-          {success && bookedInfo && (
-            <div className="mt-4 bg-[#E6F1FB] border border-[#85B7EB] rounded-xl p-4 text-[#0C447C] text-sm text-center">
-              ✅ Rendez-vous pris pour le{' '}
-              {new Date(bookedInfo.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{' '}
-              à {bookedInfo.time}. Je vous confirme très vite !
-            </div>
-          )}
         </div>
       </div>
+
+      {success && bookedInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative">
+            <button onClick={() => { setSuccess(false); setBookedInfo(null) }} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            <div className="w-16 h-16 bg-[#E6F1FB] rounded-full flex items-center justify-center mx-auto mb-5 text-3xl">✅</div>
+            <h2 className="font-playfair text-2xl font-bold text-[#0C447C] mb-3 leading-snug">
+              Rendez-vous pris pour le{' '}
+              {new Date(bookedInfo.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{' '}
+              à {bookedInfo.time}
+            </h2>
+            <p className="text-sm text-gray-400 mb-6">Je vous confirme très vite !</p>
+            <button onClick={addToCalendar} className="w-full py-3 bg-[#0C447C] text-white rounded-lg text-sm font-medium hover:bg-[#185FA5] transition-all mb-3">
+              📅 Ajouter à mon calendrier
+            </button>
+            <button onClick={() => { setSuccess(false); setBookedInfo(null) }} className="w-full py-3 bg-white text-gray-500 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all">
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
