@@ -104,6 +104,12 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
     fetchAll()
   }
 
+  async function deleteRdv(id: number) {
+    if (!confirm('Supprimer définitivement ce rendez-vous ?')) return
+    await supabase.from('rdvs').delete().eq('id', id)
+    fetchAll()
+  }
+
   const filteredRdvs = rdvs
     .filter(r => filt === 'all' ? (r.status !== 'done' && r.status !== 'cancelled') : r.status === filt)
     .filter(r => !search || r.name.toLowerCase().includes(search.toLowerCase()))
@@ -327,7 +333,7 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
                   <span className={`text-xs font-medium px-3 py-1 rounded-full ${st.cls}`}>{st.label}</span>
                   <div className="flex gap-2">
                     {r.status === 'pending' && (<><button onClick={() => updateRdv(r.id, 'confirmed')} className="text-xs text-green-700 border border-green-200 px-3 py-1.5 rounded-lg hover:bg-green-50 transition-all font-medium">✓ Confirmer</button><button onClick={() => updateRdv(r.id, 'cancelled')} className="text-xs text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all font-medium">✕ Annuler</button></>)}
-                    {r.status === 'confirmed' && (<><button onClick={() => updateRdv(r.id, 'done')} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all font-medium">✓✓ Terminé</button><button onClick={() => updateRdv(r.id, 'cancelled')} className="text-xs text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all font-medium">✕ Annuler</button></>)}
+                    {r.status === 'confirmed' && (<><button onClick={() => deleteRdv(r.id)} className="text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-all font-medium">✓✓ Terminé</button><button onClick={() => updateRdv(r.id, 'cancelled')} className="text-xs text-red-600 border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all font-medium">✕ Annuler</button></>)}
                   </div>
                 </div>
               )

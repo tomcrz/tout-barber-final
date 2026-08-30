@@ -10,6 +10,7 @@ export default function ClientPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [loadingSlots, setLoadingSlots] = useState(true)
+  const [bookedInfo, setBookedInfo] = useState<{ date: string; time: string } | null>(null)
 
   useEffect(() => { fetchSlots() }, [])
 
@@ -31,8 +32,9 @@ export default function ClientPage() {
     const { error } = await supabase.from('rdvs').insert({ name: prenom, service: 'Coupe homme', price: 15, date: slot.date, time: slot.time, phone: tel, status: 'pending' })
     if (!error) {
       await supabase.from('slots').update({ taken: true }).eq('id', selSlot)
+      setBookedInfo({ date: slot.date, time: slot.time })
       setSuccess(true); setPrenom(''); setTel(''); setSelSlot(null); fetchSlots()
-      setTimeout(() => setSuccess(false), 5000)
+      setTimeout(() => { setSuccess(false); setBookedInfo(null) }, 8000)
     } else { alert('Erreur lors de la réservation. Réessayez.') }
     setLoading(false)
   }
@@ -86,7 +88,13 @@ export default function ClientPage() {
           <button onClick={bookRdv} disabled={loading} className="w-full py-3 bg-[#0C447C] text-white rounded-lg text-sm font-medium hover:bg-[#185FA5] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {loading ? 'Envoi...' : 'Confirmer ma réservation'}
           </button>
-          {success && <div className="mt-4 bg-[#E6F1FB] border border-[#85B7EB] rounded-xl p-4 text-[#0C447C] text-sm text-center">✅ Réservation envoyée ! Je vous confirme très vite.</div>}
+          {success && bookedInfo && (
+            <div className="mt-4 bg-[#E6F1FB] border border-[#85B7EB] rounded-xl p-4 text-[#0C447C] text-sm text-center">
+              ✅ Rendez-vous pris pour le{' '}
+              {new Date(bookedInfo.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}{' '}
+              à {bookedInfo.time}. Je vous confirme très vite !
+            </div>
+          )}
         </div>
       </div>
     </div>
