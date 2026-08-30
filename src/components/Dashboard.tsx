@@ -106,7 +106,8 @@ export default function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   async function deleteRdv(id: number) {
     if (!confirm('Supprimer définitivement ce rendez-vous ?')) return
-    await supabase.from('rdvs').delete().eq('id', id)
+    const { error } = await supabase.from('rdvs').delete().eq('id', id)
+    if (error) { alert('Erreur suppression : ' + error.message); return }
     fetchAll()
   }
 
